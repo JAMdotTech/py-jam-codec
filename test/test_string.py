@@ -17,20 +17,20 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.types import String
+from jamcodec.base import JamBytes
+from jamcodec.types import String
 
 
 class TestString(unittest.TestCase):
 
     def test_string_decode_encode(self):
         obj = String.new()
-        obj.decode(ScaleBytes("0x1054657374"))
+        obj.decode(JamBytes("0x0454657374"))
         self.assertEqual(obj.value, "Test")
 
         data = obj.encode("Test")
 
-        self.assertEqual("0x1054657374", data.to_hex())
+        self.assertEqual("0x0454657374", data.to_hex())
 
     def test_string_encode_decode(self):
 
@@ -47,7 +47,7 @@ class TestString(unittest.TestCase):
         obj = String.new()
 
         data = obj.encode('µ')
-        self.assertEqual('0x08c2b5', data.to_hex())
+        self.assertEqual('0x02c2b5', data.to_hex())
 
         obj.decode(data)
         self.assertEqual(obj.value, "µ")

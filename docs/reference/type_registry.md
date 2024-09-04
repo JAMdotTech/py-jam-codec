@@ -1,1 +1,0 @@
-::: scalecodec.type_registry

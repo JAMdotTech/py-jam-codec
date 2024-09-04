@@ -17,8 +17,8 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.types import String, HashMap, U32
+from jamcodec.base import JamBytes
+from jamcodec.types import String, HashMap, U32
 
 
 class TestHashmap(unittest.TestCase):
@@ -26,11 +26,11 @@ class TestHashmap(unittest.TestCase):
     def test_hashmap_encode(self):
         obj = HashMap(String, U32).new()
         data = obj.encode([('1', 2), ('23', 24), ('28', 30), ('45', 80)])
-        self.assertEqual(data.to_hex(), '0x10043102000000083233180000000832381e00000008343550000000')
+        self.assertEqual(data.to_hex(), '0x04013102000000023233180000000232381e00000002343550000000')
 
     def test_hashmap_decode(self):
         obj = HashMap(String, U32).new()
-        data = ScaleBytes("0x10043102000000083233180000000832381e00000008343550000000")
+        data = JamBytes("0x04013102000000023233180000000232381e00000002343550000000")
         self.assertEqual([('1', 2), ('23', 24), ('28', 30), ('45', 80)], obj.decode(data))
 
 

@@ -13,15 +13,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import typing
 from abc import abstractmethod
 from typing import Optional, Union
 
-from scalecodec.constants import TYPE_DECOMP_MAX_RECURSIVE
-from scalecodec.exceptions import RemainingScaleBytesNotEmptyException, ScaleDecodeException
+from jamcodec.constants import TYPE_DECOMP_MAX_RECURSIVE
+from jamcodec.exceptions import RemainingScaleBytesNotEmptyException, ScaleDecodeException
+
+if typing.TYPE_CHECKING:
+    from jamcodec.mixins import Serializable
 
 
-class ScaleBytes:
+class JamBytes:
     """
     Representation of SCALE encoded Bytes.
     """
@@ -102,7 +105,7 @@ class ScaleBytes:
         self.offset = 0
 
     def copy(self):
-        return ScaleBytes(self.data)
+        return JamBytes(self.data)
 
     def __str__(self):
         return "0x{}".format(self.data.hex())
@@ -120,8 +123,8 @@ class ScaleBytes:
 
     def __add__(self, data):
 
-        if type(data) is ScaleBytes:
-            return ScaleBytes(self.data + data.data)
+        if type(data) is JamBytes:
+            return JamBytes(self.data + data.data)
 
         if type(data) is bytes:
             data = bytearray(data)
@@ -129,7 +132,7 @@ class ScaleBytes:
             data = bytearray.fromhex(data[2:])
 
         if type(data) is bytearray:
-            return ScaleBytes(self.data + data)
+            return JamBytes(self.data + data)
 
     def __bytes__(self):
         return self.to_bytes()
@@ -148,18 +151,19 @@ class ScaleBytes:
         return f'0x{self.data.hex()}'
 
 
-class ScaleTypeDef:
+class JamCodecTypeDef:
 
     scale_type_cls = None
+    _deserialize_type = None
 
     def __init__(self, name: str = None, metadata=None):
         if self.scale_type_cls is None:
-            self.scale_type_cls = ScaleType
+            self.scale_type_cls = JamCodecType
         self.name = name
         self.runtime_config = None
         self.metadata = metadata
 
-    def new(self, **kwargs) -> 'ScaleType':
+    def new(self, **kwargs) -> 'JamCodecType':
         obj = self.scale_type_cls(type_def=self, **kwargs)
         if 'value' in kwargs:
             obj.deserialize(kwargs['value'])
@@ -169,7 +173,7 @@ class ScaleTypeDef:
 
         return obj
 
-    def impl(self, scale_type_cls: type = None, runtime_config=None) -> 'ScaleTypeDef':
+    def impl(self, scale_type_cls: type = None, runtime_config=None) -> 'JamCodecTypeDef':
         """
 
         Returns:
@@ -185,10 +189,10 @@ class ScaleTypeDef:
     # def create_from_registry_type(self, registry_type):
 
     @abstractmethod
-    def _encode(self, value: any) -> ScaleBytes:
+    def _encode(self, value: any) -> JamBytes:
         pass
 
-    def encode(self, value: any, external_call=True) -> ScaleBytes:
+    def encode(self, value: any, external_call=True) -> JamBytes:
 
         if external_call:
             raise ValueError("encode of definition cannot be called directly")
@@ -202,7 +206,7 @@ class ScaleTypeDef:
         return self._encode(value)
 
     @abstractmethod
-    def decode(self, data: ScaleBytes) -> any:
+    def decode(self, data: JamBytes) -> any:
         pass
 
     @abstractmethod
@@ -212,6 +216,10 @@ class ScaleTypeDef:
     @abstractmethod
     def deserialize(self, value: any) -> any:
         raise NotImplementedError()
+
+    def to_serializable_obj(self, value_object: any) -> 'Serializable':
+        return value_object
+
 
     # TODO implement
 
@@ -223,13 +231,13 @@ class ScaleTypeDef:
         return self.__class__.__name__
 
 
-class ScaleType:
+class JamCodecType:
 
-    def __init__(self, type_def: ScaleTypeDef, **kwargs):
+    def __init__(self, type_def: JamCodecTypeDef, **kwargs):
         # TODO remove kwargs
 
         self.meta_info = None
-        self.type_def: ScaleTypeDef = type_def
+        self.type_def: JamCodecTypeDef = type_def
         self.value_serialized = None
         self.value_object = None
 
@@ -242,7 +250,7 @@ class ScaleType:
     # def __call__(self, *args, **kwargs):
     #     return self
 
-    def encode(self, value: Optional[any] = None) -> ScaleBytes:
+    def encode(self, value: Optional[any] = None) -> JamBytes:
         if value is not None and issubclass(self.__class__, value.__class__):
             # Accept instance of current class directly
             self._data = value.data
@@ -262,7 +270,7 @@ class ScaleType:
 
         return self._data
 
-    def decode(self, data: ScaleBytes, check_remaining=False) -> any:
+    def decode(self, data: JamBytes, check_remaining=False) -> any:
         self._data = data
         self._data_start_offset = data.offset
         # Decode type
@@ -294,6 +302,9 @@ class ScaleType:
 
         return self.value_object
 
+    def to_serializable_obj(self):
+        return self.type_def.to_serializable_obj(self.value_object)
+
     @property
     def value(self):
         return self.value_serialized
@@ -303,7 +314,7 @@ class ScaleType:
         self.value_serialized = value
 
     @property
-    def data(self) -> Optional[ScaleBytes]:
+    def data(self) -> Optional[JamBytes]:
         """
         Returns a ScaleBytes instance of the SCALE-bytes used in the decoding process
 
@@ -312,7 +323,7 @@ class ScaleType:
         bytearray
         """
         if self._data is not None:
-            return ScaleBytes(self._data.data[self._data_start_offset:self._data_end_offset])
+            return JamBytes(self._data.data[self._data_start_offset:self._data_end_offset])
 
     def example_value(self):
         return self.type_def.example_value()
@@ -341,35 +352,35 @@ class ScaleType:
             yield item
 
     def __eq__(self, other):
-        if isinstance(other, ScaleType):
+        if isinstance(other, JamCodecType):
             return other.value_serialized == self.value_serialized
         else:
             return other == self.value_serialized
 
     def __gt__(self, other):
-        if isinstance(other, ScaleType):
+        if isinstance(other, JamCodecType):
             return self.value_serialized > other.value_serialized
         else:
             return self.value_serialized > other
 
     def __ge__(self, other):
-        if isinstance(other, ScaleType):
+        if isinstance(other, JamCodecType):
             return self.value_serialized >= other.value_serialized
         else:
             return self.value_serialized >= other
 
     def __lt__(self, other):
-        if isinstance(other, ScaleType):
+        if isinstance(other, JamCodecType):
             return self.value_serialized < other.value_serialized
         else:
             return self.value_serialized < other
 
     def __le__(self, other):
-        if isinstance(other, ScaleType):
+        if isinstance(other, JamCodecType):
             return self.value_serialized <= other.value_serialized
         else:
             return self.value_serialized <= other
 
 
-class ScalePrimitive(ScaleTypeDef):
+class JamCodecPrimitive(JamCodecTypeDef):
     pass

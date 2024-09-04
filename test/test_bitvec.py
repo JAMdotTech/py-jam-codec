@@ -17,86 +17,86 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.types import BitVec
+from jamcodec.base import JamBytes
+from jamcodec.types import BitVec
 
 
 class TestBitvec(unittest.TestCase):
 
     def test_bitvec_decode(self):
         obj = BitVec().new()
-        obj.decode(ScaleBytes('0x0c07'))
+        obj.decode(JamBytes('0x0307'))
         self.assertEqual(obj.value, '0b111')
 
     def test_bitvec_decode_size2(self):
         obj = BitVec().new()
-        obj.decode(ScaleBytes('0x0803'))
+        obj.decode(JamBytes('0x0203'))
         self.assertEqual(obj.value, '0b11')
 
     def test_bitvec_decode_size_2bytes(self):
         obj = BitVec().new()
-        obj.decode(ScaleBytes('0x28fd02'))
+        obj.decode(JamBytes('0x0afd02'))
         self.assertEqual(obj.value, '0b1011111101')
 
     def test_bitvec_encode_list(self):
         obj = BitVec().new()
         data = obj.encode([True, True, True])
-        self.assertEqual(data.to_hex(), '0x0c07')
+        self.assertEqual(data.to_hex(), '0x0307')
 
     def test_bitvec_encode_list2(self):
         obj = BitVec().new()
         data = obj.encode([True, False])
-        self.assertEqual(data.to_hex(), '0x0802')
+        self.assertEqual(data.to_hex(), '0x0202')
 
     def test_bitvec_encode_list3(self):
         obj = BitVec().new()
         data = obj.encode([False, True])
-        self.assertEqual(data.to_hex(), '0x0401')
+        self.assertEqual(data.to_hex(), '0x0101')
 
     def test_bitvec_encode_list4(self):
         obj = BitVec().new()
         data = obj.encode([True, False, False, True, True, True, True, True, False, True])
-        self.assertEqual(data.to_hex(), '0x287d02')
+        self.assertEqual(data.to_hex(), '0x0a7d02')
 
     def test_bitvec_encode_bin_str(self):
         obj = BitVec().new()
         data = obj.encode('0b00000111')
-        self.assertEqual(data.to_hex(), '0x0c07')
+        self.assertEqual(data.to_hex(), '0x0307')
 
     def test_bitvec_encode_bin_str2(self):
         obj = BitVec().new()
         data = obj.encode('0b00000010')
-        self.assertEqual(data.to_hex(), '0x0802')
+        self.assertEqual(data.to_hex(), '0x0202')
 
     def test_bitvec_encode_bin_str3(self):
         obj = BitVec().new()
         data = obj.encode('0b00000001')
-        self.assertEqual(data.to_hex(), '0x0401')
+        self.assertEqual(data.to_hex(), '0x0101')
 
     def test_bitvec_encode_bin_str4(self):
         obj = BitVec().new()
         data = obj.encode('0b00000010_01111101')
-        self.assertEqual(data.to_hex(), '0x287d02')
+        self.assertEqual(data.to_hex(), '0x0a7d02')
 
     def test_bitvec_encode_int(self):
         obj = BitVec().new()
         data = obj.encode(0b00000111)
-        self.assertEqual(data.to_hex(), '0x0c07')
+        self.assertEqual(data.to_hex(), '0x0307')
 
     def test_bitvec_encode_int2(self):
         obj = BitVec().new()
         data = obj.encode(0b00000010)
-        self.assertEqual(data.to_hex(), '0x0802')
+        self.assertEqual(data.to_hex(), '0x0202')
 
     def test_bitvec_encode_int3(self):
         obj = BitVec().new()
         data = obj.encode(0b00000001)
-        self.assertEqual(data.to_hex(), '0x0401')
+        self.assertEqual(data.to_hex(), '0x0101')
 
     def test_bitvec_encode_int4(self):
         obj = BitVec().new()
         data = obj.encode(0b00000010_01111101)
-        self.assertEqual(data.to_hex(), '0x287d02')
+        self.assertEqual(data.to_hex(), '0x0a7d02')
 
     def test_bitvec_encode_empty_list(self):
         obj = BitVec().new()

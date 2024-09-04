@@ -1,3 +1,1 @@
-base58>=2.0.1
 more-itertools>=8.6.0
-requests>=2.24.0

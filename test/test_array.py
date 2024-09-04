@@ -17,26 +17,26 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.exceptions import ScaleEncodeException
-from scalecodec.types import Array, U32, U8
+from jamcodec.base import JamBytes
+from jamcodec.exceptions import ScaleEncodeException
+from jamcodec.types import Array, U32, U8
 
 
 class TestArray(unittest.TestCase):
 
     def test_dynamic_fixed_array_type_decode(self):
         obj = Array(U32, 1).new()
-        self.assertEqual([1], obj.decode(ScaleBytes("0x01000000")))
+        self.assertEqual([1], obj.decode(JamBytes("0x01000000")))
 
         obj = Array(U32, 3).new()
-        self.assertEqual([1, 2, 3], obj.decode(ScaleBytes("0x010000000200000003000000")))
+        self.assertEqual([1, 2, 3], obj.decode(JamBytes("0x010000000200000003000000")))
 
         obj = Array(U32, 0).new()
-        self.assertEqual([], obj.decode(ScaleBytes(bytes())))
+        self.assertEqual([], obj.decode(JamBytes(bytes())))
 
     def test_dynamic_fixed_array_type_decode_u8(self):
         obj = Array(U8, 65).new()
-        obj.decode(ScaleBytes(
+        obj.decode(JamBytes(
                 "0xc42b82d02bce3202f6a05d4b06d1ad46963d3be36fd0528bbe90e7f7a4e5fcd38d14234b1c9fcee920d76cfcf43b4ed5dd718e357c2bc1aae3a642975207e67f01"
         ))
         self.assertEqual(
@@ -70,7 +70,7 @@ class TestArray(unittest.TestCase):
         value = [1, 2, 3, 4]
         data = obj.encode(value)
 
-        self.assertEqual(data, ScaleBytes('0x01020304'))
+        self.assertEqual(data, JamBytes('0x01020304'))
 
         data.reset()
         self.assertEqual('0x01020304', obj.decode(data))

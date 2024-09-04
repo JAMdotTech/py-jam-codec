@@ -17,7 +17,7 @@
 
 import unittest
 
-from scalecodec.types import Enum, Bool, U32
+from jamcodec.types import Enum, Bool, U32
 
 
 class TestEnum(unittest.TestCase):

@@ -17,26 +17,26 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.exceptions import ScaleDecodeException
-from scalecodec.types import Bool
+from jamcodec.base import JamBytes
+from jamcodec.exceptions import ScaleDecodeException
+from jamcodec.types import Bool
 
 
 class TestBoolean(unittest.TestCase):
 
     def test_bool_true(self):
         obj = Bool().new()
-        obj.decode(ScaleBytes("0x01"))
+        obj.decode(JamBytes("0x01"))
         self.assertEqual(obj.value, True)
 
     def test_bool_false(self):
         obj = Bool().new()
-        obj.decode(ScaleBytes("0x00"))
+        obj.decode(JamBytes("0x00"))
         self.assertEqual(obj.value, False)
 
     def test_bool_invalid(self):
         obj = Bool().new()
-        self.assertRaises(ScaleDecodeException, obj.decode, ScaleBytes("0x02"))
+        self.assertRaises(ScaleDecodeException, obj.decode, JamBytes("0x02"))
 
     def test_bool_encode_decode(self):
         scale_obj = Bool().new()
@@ -50,7 +50,7 @@ class TestBoolean(unittest.TestCase):
     def test_bool_encode_false(self):
         scale_obj = Bool().new()
         data = scale_obj.encode(False)
-        self.assertEqual(ScaleBytes("0x00"), data)
+        self.assertEqual(JamBytes("0x00"), data)
 
 
 if __name__ == '__main__':

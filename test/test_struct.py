@@ -17,9 +17,9 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.exceptions import ScaleDeserializeException, ScaleEncodeException, ScaleDecodeException
-from scalecodec.types import Struct, U8, Tuple, U32
+from jamcodec.base import JamBytes
+from jamcodec.exceptions import ScaleDeserializeException, ScaleEncodeException, ScaleDecodeException
+from jamcodec.types import Struct, U8, Tuple, U32
 
 
 class TestStruct(unittest.TestCase):
@@ -31,28 +31,28 @@ class TestStruct(unittest.TestCase):
 
         data = scale_obj.encode(value)
 
-        self.assertEqual(ScaleBytes(data="0x020105"), data)
+        self.assertEqual(JamBytes(data="0x020105"), data)
 
     def test_struct_encode2(self):
 
         obj = Struct(aye=U32, nay=U32).new()
         data = obj.encode({'aye': 4, 'nay': 2})
 
-        self.assertEqual(ScaleBytes("0x0400000002000000"), data)
+        self.assertEqual(JamBytes("0x0400000002000000"), data)
 
     def test_struct_encode_tuple(self):
 
         obj = Struct(aye=U32, nay=U32).new()
         data = obj.encode((4, 2))
 
-        self.assertEqual(ScaleBytes("0x0400000002000000"), data)
+        self.assertEqual(JamBytes("0x0400000002000000"), data)
 
     def test_struct_encode_int(self):
 
         obj = Struct(nonce=U32).new()
         data = obj.encode({'nonce': 1})
 
-        self.assertEqual(ScaleBytes("0x01000000"), data)
+        self.assertEqual(JamBytes("0x01000000"), data)
 
     def test_struct_subclass(self):
 
@@ -63,7 +63,7 @@ class TestStruct(unittest.TestCase):
 
         data = obj.encode({'aye': 4, 'nay': 2})
 
-        self.assertEqual(ScaleBytes("0x0400000002000000"), data)
+        self.assertEqual(JamBytes("0x0400000002000000"), data)
 
     def test_encode_missing_data(self):
         scale_obj = Struct(test=U8, test2=Tuple(U8, U8)).new()
@@ -73,14 +73,14 @@ class TestStruct(unittest.TestCase):
     def test_decode(self):
         scale_obj = Struct(test=U8, test2=Tuple(U8, U8)).new()
 
-        scale_obj.decode(ScaleBytes(data="0x020105"))
+        scale_obj.decode(JamBytes(data="0x020105"))
         self.assertDictEqual({'test': 2, "test2": (1, 5)}, scale_obj.value)
 
     def test_decode_remaining(self):
         scale_obj = Struct(test=U8, test2=Tuple(U8, U8)).new()
 
         with self.assertRaises(ScaleDecodeException) as e:
-            scale_obj.decode(ScaleBytes(data="0x02010501"), check_remaining=True)
+            scale_obj.decode(JamBytes(data="0x02010501"), check_remaining=True)
 
     def test_deserialize(self):
         scale_obj = Struct(test=U8, test2=Tuple(U8, U8)).new()

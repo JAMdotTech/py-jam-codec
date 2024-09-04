@@ -17,7 +17,7 @@
 
 import unittest
 
-from scalecodec.types import Option, U16, Bytes, String
+from jamcodec.types import Option, U16, Bytes, String
 
 
 class TestOption(unittest.TestCase):

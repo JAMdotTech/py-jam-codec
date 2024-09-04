@@ -16,20 +16,20 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.types import F64, F32
+from jamcodec.base import JamBytes
+from jamcodec.types import F64, F32
 
 
 class TestFloat(unittest.TestCase):
 
     def test_f64_decode(self):
         obj = F64.new()
-        obj.decode(ScaleBytes("0x333333333333f33f"))
+        obj.decode(JamBytes("0x333333333333f33f"))
         self.assertAlmostEqual(obj.value, 1.2)
 
     def test_f32_decode(self):
         obj = F32.new()
-        obj.decode(ScaleBytes("0x9a99993f"))
+        obj.decode(JamBytes("0x9a99993f"))
         self.assertAlmostEqual(obj.value, 1.2)
 
     def test_f64_encode(self):

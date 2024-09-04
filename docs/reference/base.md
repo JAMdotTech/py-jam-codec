@@ -1,1 +1,1 @@
-::: scalecodec.base
+::: jamcodec.base

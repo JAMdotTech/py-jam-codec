@@ -17,8 +17,8 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.types import String, Bytes
+from jamcodec.base import JamBytes
+from jamcodec.types import String, Bytes
 
 
 class TestBytes(unittest.TestCase):
@@ -38,7 +38,7 @@ class TestBytes(unittest.TestCase):
         obj = Bytes.new()
         data = obj.encode(value)
 
-        self.assertEqual("0x385468697320697320612074657374", data.to_hex())
+        self.assertEqual("0x0e5468697320697320612074657374", data.to_hex())
 
     def test_bytes_encode_bytearray(self):
         value = bytearray(b'This is a test')
@@ -46,7 +46,7 @@ class TestBytes(unittest.TestCase):
         obj = Bytes.new()
         data = obj.encode(value)
 
-        self.assertEqual("0x385468697320697320612074657374", data.to_hex())
+        self.assertEqual("0x0e5468697320697320612074657374", data.to_hex())
 
     def test_bytes_encode_list_of_u8(self):
         value = [84, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101, 115, 116]
@@ -54,7 +54,7 @@ class TestBytes(unittest.TestCase):
         obj = Bytes.new()
         data = obj.encode(value)
 
-        self.assertEqual("0x385468697320697320612074657374", data.to_hex())
+        self.assertEqual("0x0e5468697320697320612074657374", data.to_hex())
 
     def test_hexbytes_encode_decode(self):
 

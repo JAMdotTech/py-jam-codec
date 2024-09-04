@@ -17,15 +17,15 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.types import Tuple, Compact, U32, U8
+from jamcodec.base import JamBytes
+from jamcodec.types import Tuple, Compact, U32, U8
 
 
 class TestTuple(unittest.TestCase):
 
     def test_tuple_decode(self):
         obj = Tuple(Compact(U32), Compact(U32)).new()
-        obj.decode(ScaleBytes("0x0c00"))
+        obj.decode(JamBytes("0x0c00"))
         self.assertEqual(obj.value, (3, 0))
 
     def test_tuple_encode_decode(self):
@@ -45,7 +45,7 @@ class TestTuple(unittest.TestCase):
     def test_tuple_single_value(self):
         # PolkadotJS compatilibity
         obj = Tuple(U8).new()
-        obj.decode(ScaleBytes('0x03'))
+        obj.decode(JamBytes('0x03'))
         self.assertEqual(obj.value, 3)
         self.assertEqual(obj.value_object, U8.new(value=3))
 

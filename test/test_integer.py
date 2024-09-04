@@ -17,20 +17,20 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.types import U16, I16, U8
+from jamcodec.base import JamBytes
+from jamcodec.types import U16, I16, U8
 
 
 class TestInteger(unittest.TestCase):
 
     def test_u16_decode(self):
         obj = U16.new()
-        obj.decode(ScaleBytes("0x2efb"))
+        obj.decode(JamBytes("0x2efb"))
         self.assertEqual(obj.value, 64302)
 
     def test_i16_decode(self):
         obj = I16.new()
-        obj.decode(ScaleBytes("0x2efb"))
+        obj.decode(JamBytes("0x2efb"))
         self.assertEqual(obj.value, -1234)
 
     def test_u16(self):

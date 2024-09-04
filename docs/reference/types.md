@@ -1,1 +1,1 @@
-::: scalecodec.types
+::: jamcodec.types

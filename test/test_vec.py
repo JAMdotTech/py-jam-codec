@@ -17,8 +17,8 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.types import Vec, String, U16
+from jamcodec.base import JamBytes
+from jamcodec.types import Vec, String, U16
 
 
 class TestVec(unittest.TestCase):
@@ -41,7 +41,7 @@ class TestVec(unittest.TestCase):
         value = [1, 2]
         data = obj.encode(value)
 
-        self.assertEqual(data, ScaleBytes('0x0801000200'))
+        self.assertEqual(data, JamBytes('0x0201000200'))
         self.assertEqual(value, obj.decode(data))
 
         self.assertEqual(obj.value_object[0].value, 1)

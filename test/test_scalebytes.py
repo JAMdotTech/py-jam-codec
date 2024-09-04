@@ -19,44 +19,44 @@
 
 import unittest
 
-from scalecodec.base import ScaleBytes
-from scalecodec.exceptions import RemainingScaleBytesNotEmptyException
-from scalecodec.types import Compact, U32, Array, U8, String
+from jamcodec.base import JamBytes
+from jamcodec.exceptions import RemainingScaleBytesNotEmptyException
+from jamcodec.types import Compact, U32, Array, U8, String
 
 
 class TestScaleBytes(unittest.TestCase):
 
     def test_unknown_data_format(self):
-        self.assertRaises(ValueError, ScaleBytes, 123)
-        self.assertRaises(ValueError, ScaleBytes, 'test')
+        self.assertRaises(ValueError, JamBytes, 123)
+        self.assertRaises(ValueError, JamBytes, 'test')
 
     def test_bytes_data_format(self):
         obj = Compact(U32).new()
-        obj.decode(ScaleBytes(b"\x02\x09\x3d\x00"))
+        obj.decode(JamBytes(b"\x02\x09\x3d\x00"))
         self.assertEqual(obj.value, 1000000)
 
     def test_remaining_bytes(self):
-        scale = ScaleBytes("0x01020304")
+        scale = JamBytes("0x01020304")
         scale.get_next_bytes(1)
         self.assertEqual(scale.get_remaining_bytes(), b'\x02\x03\x04')
 
     def test_reset(self):
-        scale = ScaleBytes("0x01020304")
+        scale = JamBytes("0x01020304")
         scale.get_next_bytes(1)
         scale.reset()
         self.assertEqual(scale.get_remaining_bytes(), b'\x01\x02\x03\x04')
 
     def test_add_scalebytes(self):
-        scale_total = ScaleBytes("0x0102") + "0x0304"
+        scale_total = JamBytes("0x0102") + "0x0304"
 
         self.assertEqual(scale_total.data, bytearray.fromhex("01020304"))
 
     def test_scale_bytes_compare(self):
-        self.assertEqual(ScaleBytes('0x1234'), ScaleBytes('0x1234'))
-        self.assertNotEqual(ScaleBytes('0x1234'), ScaleBytes('0x555555'))
+        self.assertEqual(JamBytes('0x1234'), JamBytes('0x1234'))
+        self.assertNotEqual(JamBytes('0x1234'), JamBytes('0x555555'))
 
     def test_no_more_bytes_available(self):
         obj = Array(U8, 4).new()
         with self.assertRaises(RemainingScaleBytesNotEmptyException):
-            obj.decode(ScaleBytes("0x010203"), check_remaining=False)
+            obj.decode(JamBytes("0x010203"), check_remaining=False)
 

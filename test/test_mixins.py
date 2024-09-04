@@ -6,33 +6,33 @@ from dataclasses import dataclass, field
 from os import path
 from typing import Optional, Type, Union, List
 
-from scalecodec.base import ScaleBytes, ScaleType
-from scalecodec.mixins import ScaleSerializable, T
-from scalecodec.types import H256, U8, Array, Enum
+from jamcodec.base import JamBytes, JamCodecType
+from jamcodec.mixins import Serializable, T
+from jamcodec.types import H256, U8, Array, Enum, Option
 
 
 # Test definitions
 
 
 @dataclass
-class ValidatorData(ScaleSerializable):
-    bandersnatch: bytes = field(metadata={'scale': H256})
-    ed25519: bytes = field(metadata={'scale': H256})
-    bls: bytes = field(metadata={'scale': Array(U8, 144)})
-    metadata: bytes = field(metadata={'scale': Array(U8, 128)})
+class ValidatorData(Serializable):
+    bandersnatch: bytes = field(metadata={'codec': H256})
+    ed25519: bytes = field(metadata={'codec': H256})
+    bls: bytes = field(metadata={'codec': Array(U8, 144)})
+    metadata: bytes = field(metadata={'codec': Array(U8, 128)})
 
 
 @dataclass
-class EpochMark(ScaleSerializable):
-    entropy: bytes = field(metadata={'scale': H256})
-    validators: List[bytes] = field(metadata={'scale': Array(H256, 6)})
+class EpochMark(Serializable):
+    entropy: bytes = field(metadata={'codec': H256})
+    validators: List[bytes] = field(metadata={'codec': Array(H256, 6)})
 
 @dataclass
-class OutputMarks(ScaleSerializable):
-    epoch_mark: Optional[EpochMark] = None
+class OutputMarks(Serializable):
+    epoch_mark: Optional[EpochMark] = field(metadata={'codec': Option(EpochMark.to_codec_def())})
 
 
-class CustomErrorCode(ScaleSerializable, enum.Enum):
+class CustomErrorCode(Serializable, enum.Enum):
     bad_slot = 0  # Timeslot value must be strictly monotonic.
     unexpected_ticket = 1  # Received a ticket while in epoch's tail.
     bad_ticket_order = 2  # Tickets must be sorted.
@@ -44,20 +44,17 @@ class CustomErrorCode(ScaleSerializable, enum.Enum):
 
 
 @dataclass
-class Output(ScaleSerializable):
+class Output(Serializable):
     ok: Optional[OutputMarks] = None  # Markers
     err: Optional[CustomErrorCode] = None
 
-    @classmethod
-    def scale_type_def(cls):
-
-        return Enum(
-            ok=OutputMarks.scale_type_def(),
-            err=CustomErrorCode.scale_type_def()
+    _codec_type_def = Enum(
+            ok=OutputMarks.to_codec_def(),
+            err=CustomErrorCode.to_codec_def()
         )
 
-    def to_scale_type(self) -> ScaleType:
-        scale_type = self.scale_type_def().new()
+    def to_codec_type(self) -> JamCodecType:
+        scale_type = self.to_codec_def().new()
         scale_type.deserialize(self.serialize())
         return scale_type
 
@@ -104,8 +101,8 @@ class TestSerializableMixin(unittest.TestCase):
                 )
             )
         )
-        scale_type = output.to_scale_type()
-        output2 = Output.from_scale_type(scale_type)
+        scale_type = output.to_codec_type()
+        output2 = Output.from_codec_type(scale_type)
         self.assertEqual(output, output2)
 
     def test_deserialize(self):
@@ -124,9 +121,9 @@ class TestSerializableMixin(unittest.TestCase):
 
     def test_from_to_scale_bytes(self):
 
-        scale_data = self.test_obj.to_scale_bytes()
+        scale_data = self.test_obj.to_jam_bytes()
 
-        validator_obj = ValidatorData.from_scale_bytes(scale_data)
+        validator_obj = ValidatorData.from_jam_bytes(scale_data)
 
         self.assertEqual(self.test_obj, validator_obj)
 
