@@ -8,7 +8,7 @@ from typing import Optional, Type, Union, List
 
 from jamcodec.base import JamBytes, JamCodecType
 from jamcodec.mixins import Serializable, T
-from jamcodec.types import H256, U8, Array, Enum, Option
+from jamcodec.types import H256, U8, Array, Enum, Option, Null, Bytes
 
 
 # Test definitions
@@ -70,6 +70,18 @@ class Output(Serializable):
             return {'ok': self.ok.serialize()}
 
 
+@dataclass
+class WorkExecResult(Serializable):
+
+    ok: bytes = field(default=None, metadata={'codec': Bytes})
+    out_of_gas: None = field(default=None, metadata={'codec': Null})
+    panic: None = field(default=None, metadata={'codec': Null})
+    bad_code: None = field(default=None, metadata={'codec': Null})
+    code_oversize: None = field(default=None, metadata={'codec': Null})
+
+    _codec_enum = True
+
+
 class TestSerializableMixin(unittest.TestCase):
 
     def setUp(self):
@@ -91,6 +103,18 @@ class TestSerializableMixin(unittest.TestCase):
         value = output.serialize()
 
         self.assertEqual({'err': 'duplicate_ticket'}, value)
+
+    def test_dataclass_enum_serialization(self):
+        work_exec_result = WorkExecResult(ok=bytes(4))
+        value = work_exec_result.serialize()
+        self.assertEqual({'ok': '0x00000000'}, value)
+
+        work_exec_result = WorkExecResult(out_of_gas=Null)
+        value = work_exec_result.serialize()
+        self.assertEqual({'out_of_gas': None}, value)
+        work_exec_result2 = WorkExecResult.from_json(value)
+
+        self.assertEqual(work_exec_result, work_exec_result2)
 
     def test_dataclass_to_scale_type(self):
         output = Output(

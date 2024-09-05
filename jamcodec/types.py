@@ -166,6 +166,9 @@ class NullType(JamCodecTypeDef):
     def example_value(self, _recursion_level: int = 0, max_recursion: int = TYPE_DECOMP_MAX_RECURSIVE):
         return None
 
+    def to_serializable_obj(self, value_object: any) -> 'Serializable':
+        return Null
+
 
 Null = NullType()
 
@@ -436,7 +439,7 @@ class Enum(JamCodecTypeDef):
                 else:
                     enum_value_obj = None
 
-                return (enum_key, enum_value_obj)
+                return enum_key, enum_value_obj
 
         raise ValueError(f"Error while deserializing Enum; variant '{enum_key}' not found")
 

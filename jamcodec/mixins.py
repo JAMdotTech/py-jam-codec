@@ -19,12 +19,18 @@ class Serializable:
 
             if is_dataclass(cls):
 
-                arguments = {}
-                for field in dataclasses.fields(cls):
+                if getattr(cls, '_codec_enum', False):
+                    variants = {
+                        field.name: cls.dataclass_field_to_scale_typ_def(field) for field in dataclasses.fields(cls)
+                    }
+                    cls._codec_type_def = Enum(**variants)
+                else:
+                    arguments = {}
+                    for field in dataclasses.fields(cls):
 
-                    arguments[field.name] = cls.dataclass_field_to_scale_typ_def(field)
+                        arguments[field.name] = cls.dataclass_field_to_scale_typ_def(field)
 
-                cls._codec_type_def = Struct(**arguments)
+                    cls._codec_type_def = Struct(**arguments)
 
             elif issubclass(cls, enum.Enum):
                 variants = {status.name: None for status in cls}
@@ -88,5 +94,7 @@ class Serializable:
 
         return field.metadata['codec']
 
-
-
+    def enum_value(self):
+        for field in dataclasses.fields(self):
+            if getattr(self, field.name, None) is not None:
+                return field.name, getattr(self, field.name)
