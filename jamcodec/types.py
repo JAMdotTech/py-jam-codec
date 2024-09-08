@@ -659,7 +659,13 @@ class BitVec(JamCodecTypeDef):
     and a normal Bytes would be that the length prefix indicates the number of bits encoded, not the bytes
     """
 
-    def _encode(self, value: Union[list, str, int]) -> JamBytes:
+    def _encode(self, value: Union[list, str, int, bytes]) -> JamBytes:
+
+        if type(value) is str and value[0:2] == '0x':
+            value = bytes.fromhex(value[2:])
+
+        if type(value) is bytes:
+            return JamBytes(value)
 
         if type(value) is list:
             value = sum(v << i for i, v in enumerate(reversed(value)))
@@ -802,6 +808,103 @@ class Array(JamCodecTypeDef):
                 value_object.append(obj)
 
             return value_object
+
+    def to_serializable_obj(self, value_object: dict):
+        if type(value_object) is list:
+            return [item.to_serializable_obj() for item in value_object]
+        else:
+            return value_object
+
+    def example_value(self, _recursion_level: int = 0, max_recursion: int = TYPE_DECOMP_MAX_RECURSIVE):
+        if self.type_def is U8:
+            return f'0x{str(self.length).zfill(2) * self.length}'
+        else:
+            return [self.type_def.example_value()] * self.length
+
+
+class BitArray(JamCodecTypeDef):
+
+    def __init__(self, length: int):
+        self.length = length
+        super().__init__()
+
+    def _encode(self, value: Union[list, str, bytes]) -> JamBytes:
+
+        if type(value) is list:
+            value = sum(v << i for i, v in enumerate(value))
+
+        if type(value) is str and value[0:2] == '0b':
+            # value = int(value[2:], 2)
+            raise NotImplementedError
+
+        if type(value) is bytes:
+            value = int.from_bytes(value, byteorder='little')
+
+        if type(value) is not int:
+            raise ScaleEncodeException("Provided value is not an int, binary str or a list of booleans")
+
+        byte_length = math.ceil(value.bit_length() / 8)
+
+        return JamBytes(value.to_bytes(length=byte_length, byteorder='little'))
+
+        result = bytearray()  # to store the result bytes
+
+        # Process bits in chunks of 8 (octet)
+        for i in range(0, self.length, 8):
+            byte = 0
+            # Pack bits from least significant to most significant into a byte
+            for j in range(min(8, self.length - i)):  # Handle last chunk if less than 8 bits
+                if value[i + j]:
+                    byte |= (1 << j)
+            result.append(byte)
+        return JamBytes(result)
+
+    def decode(self, data: JamBytes) -> list:
+        byte_length = (self.length + 7) // 8
+        octets = data.get_next_bytes(byte_length)
+
+        total_bits = len(octets) * 8
+        bits = [False] * total_bits
+
+        bit_index = 0
+        for byte in octets:
+            # Unpack the bits from the current byte (octet)
+            for i in range(8):
+                bits[bit_index] = (byte >> i) & 1 == 1
+                bit_index += 1
+
+        return bits[:self.length]
+
+    def serialize(self, value: Union[list, bytes]) -> Union[list, str]:
+        if type(value) is list:
+            return [i for i in value]
+        else:
+            return f'0x{value.hex()}'
+
+    def deserialize(self, value: Union[list, str, bytes, bytearray]) -> Union[list, bytes]:
+
+        if type(value) not in [list, str, bytes, bytearray]:
+            raise ScaleDeserializeException('value should be of type list, str or bytes')
+
+        if type(value) is str:
+            if value[0:2] == '0x':
+                value = bytes.fromhex(value[2:])
+            else:
+                value = value.encode()
+
+        if len(value) != self.length:
+            raise ScaleDeserializeException(
+                f'Length of array ({self.length}) does not match size of value ({len(value)})'
+            )
+
+        if type(value) is bytearray:
+            value = bytes(value)
+
+        if type(value) is bytes:
+            return value
+
+        if type(value) is list:
+            return value
 
     def to_serializable_obj(self, value_object: dict):
         if type(value_object) is list:
