@@ -833,6 +833,9 @@ class BitArray(JamCodecTypeDef):
         if type(value) is list:
             value = sum(v << i for i, v in enumerate(value))
 
+        if type(value) is str and value[0:2] == '0x':
+            value = bytes.fromhex(value[2:])
+
         if type(value) is str and value[0:2] == '0b':
             # value = int(value[2:], 2)
             raise NotImplementedError
@@ -846,18 +849,6 @@ class BitArray(JamCodecTypeDef):
         byte_length = math.ceil(value.bit_length() / 8)
 
         return JamBytes(value.to_bytes(length=byte_length, byteorder='little'))
-
-        result = bytearray()  # to store the result bytes
-
-        # Process bits in chunks of 8 (octet)
-        for i in range(0, self.length, 8):
-            byte = 0
-            # Pack bits from least significant to most significant into a byte
-            for j in range(min(8, self.length - i)):  # Handle last chunk if less than 8 bits
-                if value[i + j]:
-                    byte |= (1 << j)
-            result.append(byte)
-        return JamBytes(result)
 
     def decode(self, data: JamBytes) -> list:
         byte_length = (self.length + 7) // 8
@@ -892,11 +883,6 @@ class BitArray(JamCodecTypeDef):
             else:
                 value = value.encode()
 
-        if len(value) != self.length:
-            raise ScaleDeserializeException(
-                f'Length of array ({self.length}) does not match size of value ({len(value)})'
-            )
-
         if type(value) is bytearray:
             value = bytes(value)
 
@@ -913,10 +899,7 @@ class BitArray(JamCodecTypeDef):
             return value_object
 
     def example_value(self, _recursion_level: int = 0, max_recursion: int = TYPE_DECOMP_MAX_RECURSIVE):
-        if self.type_def is U8:
-            return f'0x{str(self.length).zfill(2) * self.length}'
-        else:
-            return [self.type_def.example_value()] * self.length
+        return [True] * self.length
 
 
 class DataType(EnumType):
