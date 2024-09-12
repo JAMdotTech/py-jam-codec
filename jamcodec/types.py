@@ -968,8 +968,10 @@ class Map(JamCodecTypeDef):
                 output[k] = v
         return output
 
-    def deserialize(self, value: dict) -> list:
-        return [(self.key_def.deserialize(k), self.value_def.deserialize(v)) for k, v in value.items()]
+    def deserialize(self, value: Union[dict, list]) -> list:
+        if type(value) is dict:
+            value = value.items()
+        return [(self.key_def.deserialize(k), self.value_def.deserialize(v)) for k, v in value]
 
     def example_value(self, _recursion_level: int = 0, max_recursion: int = TYPE_DECOMP_MAX_RECURSIVE):
         return {self.key_def.example_value(): self.value_def.example_value()}
