@@ -924,13 +924,17 @@ class DataType(EnumType):
 
 
 class Map(JamCodecTypeDef):
+
     def __init__(self, key_def: JamCodecTypeDef, value_def: JamCodecTypeDef):
         super().__init__()
-        # self.scale_type_cls = VecType
         self.key_def = key_def
         self.value_def = value_def
 
-    def _encode(self, value: list) -> JamBytes:
+    def _encode(self, value: Union[dict, list]) -> JamBytes:
+
+        if type(value) is dict:
+            value = value.items()
+
         # Encode length of Vec
         data = VarInt64.encode(len(value), external_call=False)
 
@@ -955,17 +959,23 @@ class Map(JamCodecTypeDef):
 
         return value
 
-    def serialize(self, value: list) -> list:
-        output = []
+    def serialize(self, value: list) -> dict:
+        output = {}
         for k, v in value:
             if type(k) is JamCodecType and type(v) is JamCodecType:
-                output.append((k.value_serialized, v.value_serialized))
+                output[k.value_serialized] = v.value_serialized
             else:
-                output.append((k, v))
+                output[k] = v
         return output
 
-    def deserialize(self, value: list) -> list:
-        return [(self.key_def.deserialize(k), self.value_def.deserialize(v)) for k, v in value]
+    def deserialize(self, value: dict) -> list:
+        return [(self.key_def.deserialize(k), self.value_def.deserialize(v)) for k, v in value.items()]
+
+    def example_value(self, _recursion_level: int = 0, max_recursion: int = TYPE_DECOMP_MAX_RECURSIVE):
+        return {self.key_def.example_value(): self.value_def.example_value()}
+
+    def to_serializable_obj(self, value_object: list):
+        return {key.to_serializable_obj(): value.to_serializable_obj() for key, value in value_object}
 
 
 class BytesDef(JamCodecTypeDef):
