@@ -31,7 +31,7 @@ class TestHashmap(unittest.TestCase):
     def test_hashmap_decode(self):
         obj = HashMap(String, U32).new()
         data = JamBytes("0x04013102000000023233180000000232381e00000002343550000000")
-        self.assertEqual([('1', 2), ('23', 24), ('28', 30), ('45', 80)], obj.decode(data))
+        self.assertEqual({'1': 2, '23': 24, '28': 30, '45': 80}, obj.decode(data))
 
 
 if __name__ == '__main__':
