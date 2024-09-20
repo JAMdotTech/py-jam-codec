@@ -18,6 +18,7 @@
 import unittest
 
 from jamcodec.base import JamBytes
+from jamcodec.exceptions import ScaleDecodeException
 from jamcodec.types import BitArray
 
 
@@ -28,77 +29,37 @@ class TestBitArray(unittest.TestCase):
         obj.decode(JamBytes('0x07'))
         self.assertEqual(obj.value, [True, True, True])
 
-    def test_bitvec_decode_size_2bytes(self):
+    def test_bitarray_decode_size_2bytes(self):
         obj = BitArray(10).new()
         obj.decode(JamBytes('0xfd02'))
         self.assertEqual(obj.value, [True, False, True, True, True, True, True, True, False, True])
 
-    def test_bitvec_encode_list(self):
+    def test_bitarray_encode_list(self):
         obj = BitArray(3).new()
         data = obj.encode([True, True, True])
         self.assertEqual('0x07', data.to_hex())
 
-    def test_bitvec_encode_list2(self):
+    def test_bitarray_encode_list2(self):
         obj = BitArray(2).new()
         data = obj.encode([True, False])
         self.assertEqual(data.to_hex(), '0x01')
 
-    def test_bitvec_encode_list3(self):
+    def test_bitarray_encode_list3(self):
         obj = BitArray(2).new()
         data = obj.encode([False, True])
         self.assertEqual(data.to_hex(), '0x02')
 
-    def test_bitvec_encode_list4(self):
+    def test_bitarray_encode_list4(self):
         obj = BitArray(10).new()
         data = obj.encode([True, False, True, True, True, True, True, True, False, True])
         self.assertEqual(data.to_hex(), '0xfd02')
 
-    # def test_bitvec_encode_bin_str(self):
-    #     obj = BitArray(10).new()
-    #     data = obj.encode('0b11100000')
-    #     self.assertEqual(data.to_hex(), '0x07')
-    #
-    # def test_bitvec_encode_bin_str2(self):
-    #     obj = BitArray(8).new()
-    #     data = obj.encode('0b01000000')
-    #     self.assertEqual(data.to_hex(), '0x02')
-    #
-    # def test_bitvec_encode_bin_str3(self):
-    #     obj = BitArray(8).new()
-    #     data = obj.encode('0b00000001')
-    #     self.assertEqual(data.to_hex(), '0x01')
-    #
-    # def test_bitvec_encode_bin_str4(self):
-    #     obj = BitArray(16).new()
-    #     data = obj.encode('0b00000010_01111101')
-    #     self.assertEqual(data.to_hex(), '0x7d02')
-    #
-    # def test_bitvec_encode_int(self):
-    #     obj = BitVec().new()
-    #     data = obj.encode(0b00000111)
-    #     self.assertEqual(data.to_hex(), '0x0307')
-    #
-    # def test_bitvec_encode_int2(self):
-    #     obj = BitVec().new()
-    #     data = obj.encode(0b00000010)
-    #     self.assertEqual(data.to_hex(), '0x0202')
-    #
-    # def test_bitvec_encode_int3(self):
-    #     obj = BitVec().new()
-    #     data = obj.encode(0b00000001)
-    #     self.assertEqual(data.to_hex(), '0x0101')
-    #
-    # def test_bitvec_encode_int4(self):
-    #     obj = BitVec().new()
-    #     data = obj.encode(0b00000010_01111101)
-    #     self.assertEqual(data.to_hex(), '0x0a7d02')
-
-    def test_bitvec_encode_empty_list(self):
+    def test_bitarray_encode_empty_list(self):
         obj = BitArray(0).new()
         data = obj.encode([])
         self.assertEqual(data.to_hex(), '0x')
 
-    def test_bitvec_encode_bytes(self):
+    def test_bitarray_encode_bytes(self):
         obj = BitArray(1).new()
         data = obj.encode(b'\x01')
         self.assertEqual(data.to_hex(), '0x01')
@@ -106,6 +67,14 @@ class TestBitArray(unittest.TestCase):
         value = obj.decode(data)
         self.assertEqual([True], value)
 
+    def test_bitarray_strict_decoding(self):
+        obj = BitArray(3).new()
+        with self.assertRaises(ScaleDecodeException):
+            obj.decode(JamBytes('0x0f'))
+
+        obj = BitArray(3, strict_decoding=False).new()
+        obj.decode(JamBytes('0x0f'))
+        self.assertEqual(obj.value, [True, True, True])
 
 
 if __name__ == '__main__':

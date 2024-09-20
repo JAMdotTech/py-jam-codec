@@ -824,8 +824,9 @@ class Array(JamCodecTypeDef):
 
 class BitArray(JamCodecTypeDef):
 
-    def __init__(self, length: int):
+    def __init__(self, length: int, strict_decoding: bool = True):
         self.length = length
+        self.strict_decoding = strict_decoding
         super().__init__()
 
     def _encode(self, value: Union[list, str, bytes]) -> JamBytes:
@@ -863,6 +864,9 @@ class BitArray(JamCodecTypeDef):
             for i in range(8):
                 bits[bit_index] = (byte >> i) & 1 == 1
                 bit_index += 1
+
+        if self.strict_decoding and any(bits[self.length:]):
+            raise ScaleDecodeException('Remaining bits not all 0')
 
         return bits[:self.length]
 
