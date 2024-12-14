@@ -872,11 +872,14 @@ class BitArray(JamCodecTypeDef):
 
     def serialize(self, value: Union[list, bytes]) -> Union[list, str]:
         if type(value) is list:
-            return [i for i in value]
-        else:
-            return f'0x{value.hex()}'
+            # Convert back to bytes
+            value = sum(v << i for i, v in enumerate(value))
+            byte_length = math.ceil(value.bit_length() / 8)
+            value = value.to_bytes(length=byte_length, byteorder='little')
 
-    def deserialize(self, value: Union[list, str, bytes, bytearray]) -> Union[list, bytes]:
+        return f'0x{value.hex()}'
+
+    def deserialize(self, value: Union[list, str, bytes, bytearray], convert_to_list=True) -> Union[list, bytes]:
 
         if type(value) not in [list, str, bytes, bytearray]:
             raise ScaleDeserializeException('value should be of type list, str or bytes')
@@ -893,7 +896,9 @@ class BitArray(JamCodecTypeDef):
         if type(value) is bytearray:
             value = bytes(value)
 
-        if type(value) is bytes:
+        if not convert_to_list:
+            return value
+        else:
             total_bits = len(value) * 8
             bits = [False] * total_bits
 
