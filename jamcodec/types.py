@@ -43,7 +43,7 @@ class UnsignedInteger(JamCodecPrimitive):
     def decode(self, data: JamBytes) -> int:
         return int.from_bytes(data.get_next_bytes(self.byte_count), byteorder='little')
 
-    def _encode(self, value) -> JamBytes:
+    def encode(self, value) -> JamBytes:
 
         if 0 <= int(value) <= 2**(self.byte_count * 8) - 1:
             return JamBytes(bytearray(int(value).to_bytes(self.byte_count, 'little')))
@@ -75,7 +75,7 @@ class SignedInteger(JamCodecPrimitive):
     def decode(self, data: JamBytes) -> int:
         return int.from_bytes(data.get_next_bytes(self.byte_count), byteorder='little', signed=True)
 
-    def _encode(self, value) -> JamBytes:
+    def encode(self, value) -> JamBytes:
 
         if -2**self.bits <= int(value) <= 2**self.bits - 1:
             return JamBytes(bytearray(int(value).to_bytes(self.byte_count, 'little', signed=True)))
@@ -105,7 +105,7 @@ class Float(JamCodecPrimitive):
     def decode(self, data: JamBytes) -> int:
         return struct.unpack(self.struct_format, data.get_next_bytes(self.byte_count))[0]
 
-    def _encode(self, value: float) -> JamBytes:
+    def encode(self, value: float) -> JamBytes:
         if type(value) is not float:
             raise ScaleEncodeException(f'{value} is not a float')
 
@@ -131,7 +131,7 @@ class Bool(JamCodecPrimitive):
             raise ScaleDecodeException('Invalid value for datatype "bool"')
         return bool_data == b'\x01'
 
-    def _encode(self, value: bool) -> JamBytes:
+    def encode(self, value: bool) -> JamBytes:
         if value is True:
             return JamBytes('0x01')
         elif value is False:
@@ -154,7 +154,7 @@ class NullType(JamCodecTypeDef):
     def decode(self, data: JamBytes) -> any:
         return None
 
-    def _encode(self, value: any) -> JamBytes:
+    def encode(self, value: any) -> JamBytes:
         return JamBytes(bytearray())
 
     def serialize(self, value: any) -> any:
@@ -194,7 +194,7 @@ class Struct(JamCodecTypeDef):
             self.arguments = {key: value for key, value in kwargs.items()}
         super().__init__()
 
-    def _encode(self, value: dict) -> JamBytes:
+    def encode(self, value: dict) -> JamBytes:
 
         data = JamBytes(bytearray())
         for name, scale_obj in self.arguments.items():
@@ -272,7 +272,7 @@ class Tuple(JamCodecTypeDef):
             self.values = args
         super().__init__()
 
-    def _encode(self, value: tuple) -> JamBytes:
+    def encode(self, value: tuple) -> JamBytes:
         if type(value) is not tuple:
             value = (value,)
 
@@ -345,7 +345,7 @@ class Enum(JamCodecTypeDef):
         if self.scale_type_cls is None:
             self.scale_type_cls = EnumType
 
-    def _encode(self, value: Union[str, dict]) -> JamBytes:
+    def encode(self, value: Union[str, dict]) -> JamBytes:
 
         # if issubclass(value.__class__, ScaleType) and value.type_def.__class__ is self.__class__:
         #     value = value.value
@@ -470,11 +470,11 @@ class Option(JamCodecTypeDef):
         self.some = some
         super().__init__()
 
-    def _encode(self, value: any) -> JamBytes:
+    def encode(self, value: any) -> JamBytes:
         if value is None:
             return JamBytes('0x00')
         else:
-            return JamBytes('0x01') + self.some.encode(value, external_call=False)
+            return JamBytes('0x01') + self.some.encode(value)
 
     def decode(self, data: JamBytes) -> Optional[JamCodecType]:
         if data.get_next_bytes(1) == b'\x00':
@@ -544,7 +544,7 @@ class Compact(JamCodecTypeDef):
         else:
             return int.from_bytes(self.compact_bytes, byteorder='little')
 
-    def _encode(self, value: int) -> JamBytes:
+    def encode(self, value: int) -> JamBytes:
 
         value = int(value)
 
@@ -590,13 +590,13 @@ class Vec(JamCodecTypeDef):
         self.scale_type_cls = VecType
         self.type_def = type_def
 
-    def _encode(self, value: list) -> JamBytes:
+    def encode(self, value: list) -> JamBytes:
 
         if self.type_def is U8:
-            return Bytes.encode(value, external_call=False)
+            return Bytes.encode(value)
 
         # Encode length of Vec
-        data = VarInt64.encode(len(value), external_call=False)
+        data = VarInt64.encode(len(value))
 
         for idx, item in enumerate(value):
             data += self.type_def.new().encode(item)
@@ -659,7 +659,7 @@ class BitVec(JamCodecTypeDef):
     and a normal Bytes would be that the length prefix indicates the number of bits encoded, not the bytes
     """
 
-    def _encode(self, value: Union[list, str, int, bytes]) -> JamBytes:
+    def encode(self, value: Union[list, str, int, bytes]) -> JamBytes:
 
         if type(value) is str and value[0:2] == '0x':
             value = bytes.fromhex(value[2:])
@@ -680,7 +680,7 @@ class BitVec(JamCodecTypeDef):
             return JamBytes(b'\x00')
 
         # encode the length in a varint64
-        data = VarInt64.encode(value.bit_length(), external_call=False)
+        data = VarInt64.encode(value.bit_length())
 
         byte_length = math.ceil(value.bit_length() / 8)
 
@@ -720,7 +720,7 @@ class Array(JamCodecTypeDef):
         self.length = length
         super().__init__()
 
-    def _encode(self, value: Union[list, str, bytes]) -> JamBytes:
+    def encode(self, value: Union[list, str, bytes]) -> JamBytes:
 
         if self.type_def is U8:
 
@@ -749,7 +749,7 @@ class Array(JamCodecTypeDef):
                 raise ScaleEncodeException("Length of list does not match size of array")
 
             for item in value:
-                data += self.type_def.encode(item, external_call=False)
+                data += self.type_def.encode(item)
 
             return data
 
@@ -829,7 +829,7 @@ class BitArray(JamCodecTypeDef):
         self.strict_decoding = strict_decoding
         super().__init__()
 
-    def _encode(self, value: Union[list, str, bytes]) -> JamBytes:
+    def encode(self, value: Union[list, str, bytes]) -> JamBytes:
 
         if type(value) is list:
             value = sum(v << i for i, v in enumerate(value))
@@ -881,6 +881,9 @@ class BitArray(JamCodecTypeDef):
         if type(value) not in [list, str, bytes, bytearray]:
             raise ScaleDeserializeException('value should be of type list, str or bytes')
 
+        if type(value) is list:
+            return value
+
         if type(value) is str:
             if value[0:2] == '0x':
                 value = bytes.fromhex(value[2:])
@@ -891,16 +894,23 @@ class BitArray(JamCodecTypeDef):
             value = bytes(value)
 
         if type(value) is bytes:
-            return value
+            total_bits = len(value) * 8
+            bits = [False] * total_bits
 
-        if type(value) is list:
-            return value
+            bit_index = 0
+            for byte in value:
+                # Unpack the bits from the current byte (octet)
+                for i in range(8):
+                    bits[bit_index] = (byte >> i) & 1 == 1
+                    bit_index += 1
+
+            if self.strict_decoding and any(bits[self.length:]):
+                raise ScaleDecodeException('Remaining bits not all 0')
+
+            return bits[:self.length]
 
     def to_serializable_obj(self, value_object: dict):
-        if type(value_object) is list:
-            return [item.to_serializable_obj() for item in value_object]
-        else:
-            return value_object
+        return value_object
 
     def example_value(self, _recursion_level: int = 0, max_recursion: int = TYPE_DECOMP_MAX_RECURSIVE):
         return [True] * self.length
@@ -934,17 +944,17 @@ class Map(JamCodecTypeDef):
         self.key_def = key_def
         self.value_def = value_def
 
-    def _encode(self, value: Union[dict, list]) -> JamBytes:
+    def encode(self, value: Union[dict, list]) -> JamBytes:
 
         if type(value) is dict:
             value = value.items()
 
         # Encode length of Vec
-        data = VarInt64.encode(len(value), external_call=False)
+        data = VarInt64.encode(len(value))
 
         for item_key, item_value in value:
-            data += self.key_def.encode(item_key, external_call=False)
-            data += self.value_def.encode(item_value, external_call=False)
+            data += self.key_def.encode(item_key)
+            data += self.value_def.encode(item_value)
 
         return data
 
@@ -995,7 +1005,7 @@ class BytesDef(JamCodecTypeDef):
     A variable collection of bytes, stored as an `Vec<u8>`
     """
 
-    def _encode(self, value: Union[str, bytes, bytearray, list]) -> JamBytes:
+    def encode(self, value: Union[str, bytes, bytearray, list]) -> JamBytes:
 
         if type(value) is str:
             if value[0:2] == '0x':
@@ -1011,7 +1021,7 @@ class BytesDef(JamCodecTypeDef):
             raise ScaleEncodeException(f'Cannot encode type "{type(value)}"')
 
         # Encode length of Vec
-        data = VarInt64.encode(len(value), external_call=False)
+        data = VarInt64.encode(len(value))
 
         return data + value
 
@@ -1080,7 +1090,7 @@ class HashDef(JamCodecTypeDef):
     def decode(self, data: JamBytes) -> bytes:
         return data.get_next_bytes(self.byte_count)
 
-    def _encode(self, value: Union[str, bytes]) -> JamBytes:
+    def encode(self, value: Union[str, bytes]) -> JamBytes:
 
         if type(value) is str:
             if value[0:2] != '0x' or len(value) != (self.byte_count*2)+2:
@@ -1118,9 +1128,9 @@ class HashDef(JamCodecTypeDef):
 class VarInt64Def(JamCodecTypeDef):
 
     def encode(self, value: any, external_call=True) -> JamBytes:
-        return self._encode(value)
+        return self.encode(value)
 
-    def _encode(self, value: int) -> JamBytes:
+    def encode(self, value: int) -> JamBytes:
         if value < 0:
             raise ScaleEncodeException("Cannot encode negative value")
 

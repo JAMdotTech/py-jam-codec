@@ -188,22 +188,9 @@ class JamCodecTypeDef:
 
     # def create_from_registry_type(self, registry_type):
 
-    @abstractmethod
-    def _encode(self, value: any) -> JamBytes:
+
+    def encode(self, value: any) -> JamBytes:
         pass
-
-    def encode(self, value: any, external_call=True) -> JamBytes:
-
-        if external_call:
-            raise ValueError("encode of definition cannot be called directly")
-        #
-        # if issubclass(value.__class__, ScaleType):
-        #     if value.type_def.__class__ is self.__class__:
-        #         return value.data
-        #     else:
-        #         raise ValueError(f"Cannot encode '{value.type_def.__class__}' to a '{self.__class__}'")
-        # else:
-        return self._encode(value)
 
     @abstractmethod
     def decode(self, data: JamBytes) -> any:
@@ -247,9 +234,6 @@ class JamCodecType:
 
         super().__init__()
 
-    # def __call__(self, *args, **kwargs):
-    #     return self
-
     def encode(self, value: Optional[any] = None) -> JamBytes:
         if value is not None and issubclass(self.__class__, value.__class__):
             # Accept instance of current class directly
@@ -261,7 +245,7 @@ class JamCodecType:
         if value is None:
             value = self.value_serialized
 
-        self._data = self.type_def.encode(value, False)
+        self._data = self.type_def.encode(value)
         self._data_start_offset = self._data.offset
         self._data_end_offset = self._data.length
 
