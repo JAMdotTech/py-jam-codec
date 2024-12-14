@@ -27,12 +27,12 @@ class TestBitArray(unittest.TestCase):
     def test_bitarray_decode(self):
         obj = BitArray(3).new()
         obj.decode(JamBytes('0x07'))
-        self.assertEqual(obj.value, [True, True, True])
+        self.assertEqual(obj.value_object, [True, True, True])
 
     def test_bitarray_decode_size_2bytes(self):
         obj = BitArray(10).new()
         obj.decode(JamBytes('0xfd02'))
-        self.assertEqual(obj.value, [True, False, True, True, True, True, True, True, False, True])
+        self.assertEqual(obj.value_object, [True, False, True, True, True, True, True, True, False, True])
 
     def test_bitarray_encode_list(self):
         obj = BitArray(3).new()
@@ -64,8 +64,8 @@ class TestBitArray(unittest.TestCase):
         data = obj.encode(b'\x01')
         self.assertEqual(data.to_hex(), '0x01')
 
-        value = obj.decode(data)
-        self.assertEqual([True], value)
+        obj.decode(data)
+        self.assertEqual([True], obj.value_object)
 
     def test_bitarray_strict_decoding(self):
         obj = BitArray(3).new()
@@ -74,7 +74,7 @@ class TestBitArray(unittest.TestCase):
 
         obj = BitArray(3, strict_decoding=False).new()
         obj.decode(JamBytes('0x0f'))
-        self.assertEqual(obj.value, [True, True, True])
+        self.assertEqual(obj.value_object, [True, True, True])
 
 
 if __name__ == '__main__':
