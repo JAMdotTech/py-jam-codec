@@ -831,6 +831,8 @@ class BitArray(JamCodecTypeDef):
 
     def encode(self, value: Union[list, str, bytes]) -> JamBytes:
 
+        byte_length = (self.length + 7) // 8
+
         if type(value) is list:
             value = sum(v << i for i, v in enumerate(value))
 
@@ -846,8 +848,6 @@ class BitArray(JamCodecTypeDef):
 
         if type(value) is not int:
             raise ScaleEncodeException("Provided value is not an int, binary str or a list of booleans")
-
-        byte_length = math.ceil(value.bit_length() / 8)
 
         return JamBytes(value.to_bytes(length=byte_length, byteorder='little'))
 
