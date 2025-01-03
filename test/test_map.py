@@ -44,7 +44,7 @@ class TestMap(unittest.TestCase):
 
         obj.decode(JamBytes('0x01020000000474657374'))
 
-        self.assertEqual({2: '0x74657374'}, obj.serialize())
+        self.assertEqual([(2, '0x74657374')], obj.serialize())
         self.assertEqual({2: b'test'}, obj.to_serializable_obj())
 
 

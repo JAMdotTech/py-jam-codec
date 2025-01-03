@@ -978,11 +978,8 @@ class Map(JamCodecTypeDef):
 
         return value
 
-    def serialize(self, value: list) -> dict:
-        output = {}
-        for k, v in value:
-            output[k.value_serialized] = v.value_serialized
-        return output
+    def serialize(self, value: list) -> typing.List[typing.Tuple]:
+        return [(k.value_serialized, v.value_serialized) for k, v in value]
 
     def deserialize(self, value: Union[dict, list]) -> list:
         if type(value) is dict:
