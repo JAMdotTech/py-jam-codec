@@ -19,6 +19,7 @@ import enum
 import math
 import struct
 import typing
+from collections.abc import Mapping
 from typing import Union, Optional
 
 from jamcodec.base import JamCodecType, JamBytes, JamCodecPrimitive, JamCodecTypeDef
@@ -949,9 +950,9 @@ class Map(JamCodecTypeDef):
         self.key_def = key_def
         self.value_def = value_def
 
-    def encode(self, value: Union[dict, list]) -> JamBytes:
+    def encode(self, value: Union[typing.Mapping, list]) -> JamBytes:
 
-        if type(value) is dict:
+        if isinstance(value, Mapping):
             value = value.items()
 
         # Encode length of Vec
@@ -981,8 +982,8 @@ class Map(JamCodecTypeDef):
     def serialize(self, value: list) -> typing.List[typing.Tuple]:
         return [(k.value_serialized, v.value_serialized) for k, v in value]
 
-    def deserialize(self, value: Union[dict, list]) -> list:
-        if type(value) is dict:
+    def deserialize(self, value: Union[typing.Mapping, list]) -> list:
+        if isinstance(value, Mapping):
             value = value.items()
 
         result = []

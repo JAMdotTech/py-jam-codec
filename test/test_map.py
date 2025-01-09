@@ -16,6 +16,7 @@
 #
 
 import unittest
+from collections.abc import Mapping
 
 from jamcodec.base import JamBytes
 from jamcodec.types import U32, Map, H256, Bytes
@@ -46,6 +47,40 @@ class TestMap(unittest.TestCase):
 
         self.assertEqual([(2, '0x74657374')], obj.serialize())
         self.assertEqual({2: b'test'}, obj.to_serializable_obj())
+
+
+    def test_mapping_type(self):
+
+        class StorageMap(Mapping):
+            def __init__(self, initial_data: dict = None):
+                if initial_data is None:
+                    initial_data = {}
+                self.cache = initial_data
+
+            def __getitem__(self, *args):
+
+                if len(args) == 1:
+                    args = args[0]
+
+                return self.cache.get(args)
+
+            def __iter__(self):
+                return iter(self.cache)
+
+            def __len__(self):
+                return len(self.cache)
+
+        obj = Map(U32, Bytes).new()
+
+        data = obj.encode(StorageMap({2: b'test'}))
+        self.assertEqual(JamBytes('0x01020000000474657374'), data)
+
+        obj = Map(U32, Bytes).new()
+
+        obj.deserialize(StorageMap({2: b'test'}))
+
+        self.assertEqual(obj.value_object[0][0], 2)
+
 
 
 if __name__ == '__main__':
