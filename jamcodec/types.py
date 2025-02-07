@@ -304,9 +304,9 @@ class Tuple(JamCodecTypeDef):
 
         return tuple((i.value for i in value))
 
-    def deserialize(self, value: tuple) -> tuple:
+    def deserialize(self, value: Union[tuple, list]) -> tuple:
 
-        if type(value) is not tuple:
+        if type(value) not in (tuple, list):
             value = (value,)
 
         value_object = ()
@@ -322,6 +322,9 @@ class Tuple(JamCodecTypeDef):
 
     def example_value(self, _recursion_level: int = 0, max_recursion: int = TYPE_DECOMP_MAX_RECURSIVE):
         return tuple([i.example_value() for i in self.values])
+
+    def to_serializable_obj(self, value_object: tuple) -> tuple:
+        return tuple([item.to_serializable_obj() for item in value_object])
 
 class EnumType(JamCodecType):
 
@@ -953,7 +956,8 @@ class Map(JamCodecTypeDef):
     def encode(self, value: Union[typing.Mapping, list]) -> JamBytes:
 
         if isinstance(value, Mapping):
-            value = value.items()
+            # Sort Map by keys
+            value = sorted(value.items(), key=lambda x: x[0])
 
         # Encode length of Vec
         data = VarInt64.encode(len(value))

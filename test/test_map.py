@@ -29,11 +29,11 @@ class TestMap(unittest.TestCase):
         obj = Map(H256, Bytes).new()
 
         value = {
-            "0x03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314": b'test',
             "0xbb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa": b'\x01\x02',
+            "0x03170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c111314": b'test',
 
         }
-
+        # Should be encoded sorted by key
         data = obj.encode(value)
         self.assertEqual(
             JamBytes("0x0203170a2e7597b7b7e3d84c05391d139a62b157e78786d8c082f29dcf4c1113140474657374bb30a42c1e62f0afda5f0a4e8a562f7a13a24cea00ee81917b86b89e801314aa020102"),
