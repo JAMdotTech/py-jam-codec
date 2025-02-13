@@ -609,7 +609,7 @@ class Vec(JamCodecTypeDef):
 
         return data
 
-    def decode(self, data: JamBytes) -> list:
+    def decode(self, data: JamBytes) -> Union[list, bytes]:
 
         if self.type_def is U8:
             return Bytes.decode(data)
@@ -627,12 +627,12 @@ class Vec(JamCodecTypeDef):
 
         return value
 
-    def serialize(self, value: list) -> list:
+    def serialize(self, value: Union[list, bytes]) -> Union[list, str]:
         if self.type_def is U8:
             return Bytes.serialize(value)
         return [i.value_serialized for i in value]
 
-    def deserialize(self, value: list) -> list:
+    def deserialize(self, value: Union[list, bytes]) -> Union[list, bytes]:
         if self.type_def is U8:
             return Bytes.deserialize(value)
 
@@ -1032,13 +1032,13 @@ class BytesDef(JamCodecTypeDef):
 
         return data + value
 
-    def decode(self, data: JamBytes) -> bytearray:
+    def decode(self, data: JamBytes) -> bytes:
         # Decode length of Vec
         length = VarInt64.decode(data)
 
-        return data.get_next_bytes(length)
+        return bytes(data.get_next_bytes(length))
 
-    def serialize(self, value: bytearray) -> str:
+    def serialize(self, value: bytes) -> str:
         return f'0x{value.hex()}'
 
     def deserialize(self, value: Union[bytes, str, list]) -> bytes:
@@ -1095,7 +1095,7 @@ class HashDef(JamCodecTypeDef):
         self.byte_count = int(self.bits / 8)
 
     def decode(self, data: JamBytes) -> bytes:
-        return data.get_next_bytes(self.byte_count)
+        return bytes(data.get_next_bytes(self.byte_count))
 
     def encode(self, value: Union[str, bytes]) -> JamBytes:
 
