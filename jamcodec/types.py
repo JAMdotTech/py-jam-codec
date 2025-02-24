@@ -203,7 +203,7 @@ class Struct(JamCodecTypeDef):
             if name not in value:
                 raise ScaleEncodeException(f'Argument "{name}" of Struct is missing in given value')
 
-            data += scale_obj.new().encode(value[name])
+            data += scale_obj.encode(value[name])
 
             if value[name] and issubclass(value[name].__class__, JamCodecType):
                 value[name] = value[name].serialize()
@@ -280,7 +280,7 @@ class Tuple(JamCodecTypeDef):
         data = JamBytes(bytearray())
         for idx, scale_obj in enumerate(self.values):
 
-            data += scale_obj.new().encode(value[idx])
+            data += scale_obj.encode(value[idx])
         return data
 
     def decode(self, data: JamBytes) -> tuple:
@@ -377,7 +377,7 @@ class Enum(JamCodecTypeDef):
 
                 if variant_obj is not None:
 
-                    data += variant_obj.new().encode(enum_value)
+                    data += variant_obj.encode(enum_value)
 
                 return data
 
@@ -603,9 +603,12 @@ class Vec(JamCodecTypeDef):
         data = VarInt64.encode(len(value))
 
         for idx, item in enumerate(value):
-            data += self.type_def.new().encode(item)
-            if item and issubclass(item.__class__, JamCodecType):
-                value[idx] = item.serialize()
+            if type(item) is JamBytes:
+                data += item
+            else:
+                data += self.type_def.encode(item)
+                if item and issubclass(item.__class__, JamCodecType):
+                    value[idx] = item.serialize()
 
         return data
 
