@@ -959,8 +959,11 @@ class Map(JamCodecTypeDef):
     def encode(self, value: Union[typing.Mapping, list]) -> JamBytes:
 
         if isinstance(value, Mapping):
-            # Sort Map by keys
-            value = sorted(value.items(), key=lambda x: x[0])
+            value = value.items()
+
+        if type(value) is list:
+            # Sort by first item
+            value = sorted(value, key=lambda x: x[0])
 
         # Encode length of Vec
         data = VarInt64.encode(len(value))
