@@ -10,7 +10,7 @@ pip install jamcodec
 ## Code examples
 
 ```python
-from jamcodec.types import JamBytes, Bool, String, U32, U8, U16, Struct, Vec, Compact, Tuple, Enum
+from jamcodec.types import JamBytes, Bool, String, U32, U8, U16, Struct, Vec, VarInt64, Tuple, Enum
 
 # encode a Vec<u16>
 obj = Vec(U16).new()
@@ -25,7 +25,7 @@ value = scale_obj.decode(JamBytes("0x020105"))
 scale_obj = Enum(
     Bool=Bool(),
     Number=U32,
-    Complex=Struct(data=String(), version=Compact(U8)),
+    Complex=Struct(data=String, version=VarInt64),
     None_=None
 ).new()
 value = {'Bool': True}

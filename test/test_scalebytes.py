@@ -21,7 +21,7 @@ import unittest
 
 from jamcodec.base import JamBytes
 from jamcodec.exceptions import RemainingScaleBytesNotEmptyException
-from jamcodec.types import Compact, U32, Array, U8, String
+from jamcodec.types import CompactDef, U32, Array, U8, String
 
 
 class TestScaleBytes(unittest.TestCase):
@@ -31,7 +31,7 @@ class TestScaleBytes(unittest.TestCase):
         self.assertRaises(ValueError, JamBytes, 'test')
 
     def test_bytes_data_format(self):
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         obj.decode(JamBytes(b"\x02\x09\x3d\x00"))
         self.assertEqual(obj.value, 1000000)
 
