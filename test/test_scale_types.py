@@ -17,7 +17,7 @@
 import unittest
 
 from jamcodec.base import JamBytes
-from jamcodec.types import Compact, U32, U16, Tuple
+from jamcodec.types import CompactDef, U32, U16, Tuple
 
 
 class TestScaleTypes(unittest.TestCase):
@@ -29,19 +29,19 @@ class TestScaleTypes(unittest.TestCase):
         self.assertEqual(obj.value, 64302)
 
     def test_value_equals_value_serialized_and_value_object(self):
-        obj = Tuple(Compact(U32), Compact(U32)).new()
+        obj = Tuple(CompactDef(U32), CompactDef(U32)).new()
         obj.decode(JamBytes("0x0c00"))
         self.assertEqual(obj.value, obj.value_serialized)
         self.assertEqual(obj.value, obj.value_object)
 
     def test_value_object(self):
-        obj = Tuple(Compact(U32), Compact(U32)).new()
+        obj = Tuple(CompactDef(U32), CompactDef(U32)).new()
         obj.decode(JamBytes("0x0c00"))
         self.assertEqual(obj.value_object[0].value_object, 3)
         self.assertEqual(obj.value_object[1].value_object, 0)
 
     def test_value_object_shorthand(self):
-        obj = Tuple(Compact(U32), Compact(U32)).new()
+        obj = Tuple(CompactDef(U32), CompactDef(U32)).new()
         obj.decode(JamBytes("0x0c00"))
         self.assertEqual(obj[0], 3)
         self.assertEqual(obj[1], 0)

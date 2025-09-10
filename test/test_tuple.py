@@ -18,13 +18,13 @@
 import unittest
 
 from jamcodec.base import JamBytes
-from jamcodec.types import Tuple, Compact, U32, U8
+from jamcodec.types import Tuple, CompactDef, U32, U8
 
 
 class TestTuple(unittest.TestCase):
 
     def test_tuple_decode(self):
-        obj = Tuple(Compact(U32), Compact(U32)).new()
+        obj = Tuple(CompactDef(U32), CompactDef(U32)).new()
         obj.decode(JamBytes("0x0c00"))
         self.assertEqual(obj.value, (3, 0))
 
@@ -38,7 +38,7 @@ class TestTuple(unittest.TestCase):
         self.assertEqual(value, scale_obj.value)
 
     def test_tuple_deserialize(self):
-        obj = Tuple(Compact(U32), Compact(U32)).new()
+        obj = Tuple(CompactDef(U32), CompactDef(U32)).new()
         obj.deserialize((3, 2))
         self.assertEqual(obj.value, (3, 2))
 

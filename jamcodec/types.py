@@ -508,7 +508,7 @@ class Option(JamCodecTypeDef):
         return None, self.some.example_value()
 
 
-class Compact(JamCodecTypeDef):
+class CompactDef(JamCodecTypeDef):
     def __init__(self, type_: JamCodecTypeDef = None):
         self.type = type_
         self.compact_length = 0
@@ -595,7 +595,6 @@ class Vec(JamCodecTypeDef):
         self.type_def = type_def
 
     def encode(self, value: list) -> JamBytes:
-
         if self.type_def is U8:
             return Bytes.encode(value)
 
@@ -959,8 +958,11 @@ class Map(JamCodecTypeDef):
     def encode(self, value: Union[typing.Mapping, list]) -> JamBytes:
 
         if isinstance(value, Mapping):
-            # Sort Map by keys
-            value = sorted(value.items(), key=lambda x: x[0])
+            # Convert to list
+            value = value.items()
+
+        # Sort Map by keys
+        value = sorted(value, key=lambda x: x[0])
 
         # Encode length of Vec
         data = VarInt64.encode(len(value))
@@ -1137,9 +1139,6 @@ class HashDef(JamCodecTypeDef):
 
 class VarInt64Def(JamCodecTypeDef):
 
-    def encode(self, value: any, external_call=True) -> JamBytes:
-        return self.encode(value)
-
     def encode(self, value: int) -> JamBytes:
         if value < 0:
             raise ScaleEncodeException("Cannot encode negative value")
@@ -1235,3 +1234,4 @@ Hash = H256
 HashMap = Map
 BTreeMap = Map
 VarInt64 = VarInt64Def()
+Compact = CompactDef()

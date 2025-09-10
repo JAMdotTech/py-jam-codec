@@ -19,52 +19,52 @@ import unittest
 
 from jamcodec.base import JamBytes
 from jamcodec.exceptions import ScaleDecodeException, RemainingScaleBytesNotEmptyException
-from jamcodec.types import Compact, U32, U128
+from jamcodec.types import CompactDef, U32, U128
 
 
 class TestCompact(unittest.TestCase):
 
     def test_compact_u32(self):
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         obj.decode(JamBytes("0x02093d00"))
         self.assertEqual(obj.value, 1000000)
 
     def test_compact_u32_1byte(self):
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         obj.decode(JamBytes("0x18"))
         self.assertEqual(obj.value, 6)
 
     def test_compact_u32_remaining_bytes(self):
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         with self.assertRaises(ScaleDecodeException):
             obj.decode(JamBytes("0x02093d0001"), check_remaining=True)
 
     def test_compact_u32_invalid(self):
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         self.assertRaises(RemainingScaleBytesNotEmptyException, obj.decode, JamBytes("0x"))
 
     def test_compact_u32_1byte_encode(self):
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         obj.decode(JamBytes("0x18"))
 
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         obj.encode(6)
         self.assertEqual(str(obj.data), "0x18")
 
     def test_compact_u32_2bytes_encode(self):
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         obj.encode(6000)
         self.assertEqual(str(obj.data), "0xc15d")
 
     def test_compact_u32_4bytes_encode(self):
 
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         obj.encode(1000000)
         self.assertEqual(str(obj.data), "0x02093d00")
 
     def test_compact_u32_larger_than_4bytes_encode(self):
 
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         obj.encode(150000000000000)
         self.assertEqual(str(obj.data), "0x0b0060b7986c88")
 
@@ -72,10 +72,10 @@ class TestCompact(unittest.TestCase):
 
         value = 2000001
 
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         data = obj.encode(value)
 
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
 
         self.assertEqual(obj.decode(data), value)
 
@@ -83,10 +83,10 @@ class TestCompact(unittest.TestCase):
 
         value = 2**30
 
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
         data = obj.encode(value)
 
-        obj = Compact(U32).new()
+        obj = CompactDef(U32).new()
 
         self.assertEqual(obj.decode(data), value)
 
@@ -96,7 +96,7 @@ class TestCompact(unittest.TestCase):
 
         Balance = U128
 
-        obj = Compact(Balance).new()
+        obj = CompactDef(Balance).new()
         data = obj.encode(value)
 
         self.assertEqual(str(scale_data), str(data))
@@ -105,13 +105,13 @@ class TestCompact(unittest.TestCase):
 
     def test_balance(self):
         Balance = U128
-        obj = Compact(Balance).new()
+        obj = CompactDef(Balance).new()
         obj.decode(JamBytes("0x130080cd103d71bc22"))
         self.assertEqual(obj.value, 2503000000000000000)
 
     def test_compact_no_type(self):
         data = JamBytes("0x02093d00")
-        compact = Compact().new()
+        compact = CompactDef().new()
         compact.decode(data)
         self.assertEqual(compact.value, 1000000)
 
