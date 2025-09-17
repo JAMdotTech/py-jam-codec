@@ -371,8 +371,11 @@ class Enum(JamCodecTypeDef):
 
         for idx, (variant_name, variant_obj) in enumerate(self.variants.items()):
 
-            if enum_key == variant_name:
+            if type(variant_obj) is dict:
+                idx = variant_obj.get('id', idx)
+                variant_obj = variant_obj.get('type', variant_obj)
 
+            if enum_key == variant_name:
                 data = JamBytes(bytearray([idx]))
 
                 if variant_obj is not None:
@@ -387,9 +390,19 @@ class Enum(JamCodecTypeDef):
 
         index = int.from_bytes(data.get_next_bytes(1), byteorder='little')
 
-        try:
-            enum_key, enum_variant = list(self.variants.items())[index]
-        except IndexError:
+        enum_key = None
+        enum_variant = None
+
+        for idx, (variant_key, variant_obj) in enumerate(self.variants.items()):
+            if type(variant_obj) is dict:
+                idx = variant_obj.get('id', idx)
+                variant_obj = variant_obj.get('type', variant_obj)
+            if index == idx:
+                enum_key = variant_key
+                enum_variant = variant_obj
+                break
+
+        if enum_key is None:
             raise ScaleDecodeException(f"Index '{index}' not present in Enum type mapping")
 
         if enum_variant is None:
@@ -433,6 +446,9 @@ class Enum(JamCodecTypeDef):
         enum_key, enum_value = list(value.items())[0]
 
         for idx, (variant_name, variant_obj) in enumerate(self.variants.items()):
+
+            if type(variant_obj) is dict:
+                variant_obj = variant_obj.get('type', variant_obj)
 
             if enum_key == variant_name:
 
