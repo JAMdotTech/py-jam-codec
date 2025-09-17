@@ -17,7 +17,7 @@
 
 import unittest
 
-from jamcodec.types import Enum, Bool, U32
+from jamcodec.types import Enum, Bool, U32, String
 
 
 class TestEnum(unittest.TestCase):
@@ -60,6 +60,14 @@ class TestEnum(unittest.TestCase):
         scale_obj.deserialize('None')
         self.assertEqual(('None', None), scale_obj.value_object)
 
+    def test_enum_explicit_id(self):
+        scale_obj = Enum(Bool=Bool(), Number=U32, Error={'id': 255, 'type': String}).new()
+        jam_bytes = scale_obj.encode({'Error': 'test'})
+        self.assertEqual('0xff0474657374', jam_bytes.to_hex())
+
+        value = scale_obj.decode(jam_bytes)
+        self.assertEqual({'Error': 'test'}, value)
+        
 
 if __name__ == '__main__':
     unittest.main()
