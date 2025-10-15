@@ -56,6 +56,25 @@ class TestMap(unittest.TestCase):
             data
         )
 
+    def test_map_encode_sort_key_values(self):
+        obj = Map(U32, U32).new()
+        value = [
+            (2, 1),
+            (2, 2),
+            (1, 2),
+            (1, 1)
+        ]
+
+        data = obj.encode(value)
+
+        self.assertEqual(
+            JamBytes(
+                "0x040100000001000000010000000200000002000000010000000200000002000000"
+            ),
+            data
+        )
+
+
     def test_map_decode(self):
         obj = Map(U32, Bytes).new()
 

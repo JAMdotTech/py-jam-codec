@@ -115,6 +115,13 @@ class JamBytes:
             return False
         return self.data == other.data
 
+
+    def __lt__(self, other):
+        return self.data < other.data
+
+    def __gt__(self, other):
+        return self.data > other.data
+
     def __len__(self):
         return len(self.data)
 
