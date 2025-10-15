@@ -977,8 +977,8 @@ class Map(JamCodecTypeDef):
             # Convert to list
             value = value.items()
 
-        # Sort Map by keys
-        value = sorted(value, key=lambda x: x[0])
+        # Sort Map by keys and then values
+        value = sorted(value)
 
         # Encode length of Vec
         data = VarInt64.encode(len(value))
