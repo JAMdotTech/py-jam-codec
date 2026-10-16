@@ -10,15 +10,16 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    # Python 3.9 downloads are available for Ubuntu 24.04, but not 26.04.
+    runs-on: ubuntu-26.04
     strategy:
       matrix:
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
 
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
