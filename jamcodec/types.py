@@ -675,6 +675,67 @@ class Vec(JamCodecTypeDef):
         return [self.type_def.example_value()]
 
 
+class BoundedVec(Vec):
+    """A Vec with inclusive cardinality bounds and a canonical length prefix.
+
+    ``multiple`` requires the element count to be divisible by that value.
+    Decoding checks the count before constructing or decoding any element.
+    Like Vec(U8), BoundedVec(U8, ...) represents bytes; bounds count bytes,
+    including when encoding or deserializing a hex or UTF-8 string.
+    """
+
+    def __init__(self, type_def: JamCodecTypeDef, maximum: int, minimum: int = 0, multiple: int = 1):
+        if any(type(bound) is not int for bound in (maximum, minimum, multiple)):
+            raise ValueError('Sequence bounds and multiple must be integers')
+        if not 0 <= minimum <= maximum or multiple <= 0:
+            raise ValueError('Expected 0 <= minimum <= maximum and multiple > 0')
+        super().__init__(type_def)
+        self.maximum = maximum
+        self.minimum = minimum
+        self.multiple = multiple
+
+    def _check_count(self, count: int) -> None:
+        if not self.minimum <= count <= self.maximum or count % self.multiple:
+            raise ValueError(
+                f'invalid sequence length {count}: expected {self.minimum}..'
+                f'{self.maximum} in multiples of {self.multiple}'
+            )
+
+    def decode(self, data: JamBytes) -> Union[list, bytes]:
+        start = data.offset
+        count = VarInt64.decode(data)
+        if data.data[start:data.offset] != VarInt64.encode(count).data:
+            raise ValueError('non-canonical sequence length')
+        self._check_count(count)
+
+        if self.type_def is U8:
+            return bytes(data.get_next_bytes(count))
+
+        values = []
+        for _ in range(count):
+            item = self.type_def.new()
+            item.decode(data)
+            values.append(item)
+        return values
+
+    def encode(self, value: Union[list, bytes, bytearray, str]) -> JamBytes:
+        if self.type_def is U8:
+            value = Bytes.deserialize(value)
+        self._check_count(len(value))
+        return super().encode(value)
+
+    def deserialize(self, value: Union[list, bytes, bytearray, str]) -> Union[list, bytes]:
+        if self.type_def is U8:
+            value = Bytes.deserialize(value)
+        self._check_count(len(value))
+        return super().deserialize(value)
+
+    def to_serializable_obj(self, value_object: Union[list, bytes]):
+        if self.type_def is U8:
+            return value_object
+        return super().to_serializable_obj(value_object)
+
+
 class BitVec(JamCodecTypeDef):
     """
     A BitVec that represents an array of bits. The bits are however stored encoded. The difference between this
