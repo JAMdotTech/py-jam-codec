@@ -197,18 +197,18 @@ class Struct(JamCodecTypeDef):
 
     def encode(self, value: dict) -> JamBytes:
 
-        data = JamBytes(bytearray())
+        data = bytearray()
         for name, scale_obj in self.arguments.items():
 
             if name not in value:
                 raise ScaleEncodeException(f'Argument "{name}" of Struct is missing in given value')
 
-            data += scale_obj.encode(value[name])
+            data.extend(scale_obj.encode(value[name]).data)
 
             if value[name] and issubclass(value[name].__class__, JamCodecType):
                 value[name] = value[name].serialize()
 
-        return data
+        return JamBytes(data)
 
     def decode(self, data) -> dict:
         value = {}
@@ -277,11 +277,11 @@ class Tuple(JamCodecTypeDef):
         if type(value) is not tuple:
             value = (value,)
 
-        data = JamBytes(bytearray())
+        data = bytearray()
         for idx, scale_obj in enumerate(self.values):
 
-            data += scale_obj.encode(value[idx])
-        return data
+            data.extend(scale_obj.encode(value[idx]).data)
+        return JamBytes(data)
 
     def decode(self, data: JamBytes) -> tuple:
         value = ()
@@ -615,17 +615,17 @@ class Vec(JamCodecTypeDef):
             return Bytes.encode(value)
 
         # Encode length of Vec
-        data = VarInt64.encode(len(value))
+        data = VarInt64.encode(len(value)).data
 
         for idx, item in enumerate(value):
             if type(item) is JamBytes:
-                data += item
+                data.extend(item.data)
             else:
-                data += self.type_def.encode(item)
+                data.extend(self.type_def.encode(item).data)
                 if item and issubclass(item.__class__, JamCodecType):
                     value[idx] = item.serialize()
 
-        return data
+        return JamBytes(data)
 
     def decode(self, data: JamBytes) -> Union[list, bytes]:
 
@@ -823,7 +823,7 @@ class Array(JamCodecTypeDef):
 
             return JamBytes(value)
         else:
-            data = JamBytes(bytearray())
+            data = bytearray()
 
             if type(value) is not list:
                 raise ScaleEncodeException("Value must be of type list")
@@ -832,9 +832,9 @@ class Array(JamCodecTypeDef):
                 raise ScaleEncodeException("Length of list does not match size of array")
 
             for item in value:
-                data += self.type_def.encode(item)
+                data.extend(self.type_def.encode(item).data)
 
-            return data
+            return JamBytes(data)
 
     def decode(self, data: JamBytes) -> Union[list, bytes]:
         if self.type_def is U8:
@@ -1042,13 +1042,13 @@ class Map(JamCodecTypeDef):
         value = sorted(value)
 
         # Encode length of Vec
-        data = VarInt64.encode(len(value))
+        data = VarInt64.encode(len(value)).data
 
         for item_key, item_value in value:
-            data += self.key_def.encode(item_key)
-            data += self.value_def.encode(item_value)
+            data.extend(self.key_def.encode(item_key).data)
+            data.extend(self.value_def.encode(item_value).data)
 
-        return data
+        return JamBytes(data)
 
     def decode(self, data: JamBytes) -> list:
         # Decode length of Map
