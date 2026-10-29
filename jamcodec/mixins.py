@@ -6,7 +6,7 @@ import typing
 import json
 
 from jamcodec.base import JamCodecTypeDef, JamCodecType, JamBytes
-from jamcodec.types import Struct, Option, Vec, Enum
+from jamcodec.types import Struct, StructObject, Option, Vec, Enum
 
 T = TypeVar('T')
 
@@ -69,6 +69,10 @@ class Serializable:
 
     def to_jam_bytes(self) -> JamBytes:
         scale_obj = self.to_codec_type()
+        if type(scale_obj) in (JamCodecType, StructObject):
+            # The value is already normalized; only the encoded bytes are needed.
+            return scale_obj.type_def.encode(scale_obj.value_serialized)
+        # Preserve encoding and validation hooks on custom codec wrappers.
         return scale_obj.encode()
 
     @classmethod
