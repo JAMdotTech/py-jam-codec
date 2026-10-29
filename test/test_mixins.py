@@ -7,8 +7,9 @@ from os import path
 from typing import Optional, Type, Union, List
 
 from jamcodec.base import JamBytes, JamCodecType
+from jamcodec.exceptions import ScaleDeserializeException, ScaleEncodeException
 from jamcodec.mixins import Serializable, T
-from jamcodec.types import H256, U8, Array, Enum, Option, Null, Bytes
+from jamcodec.types import H256, U8, U16, Array, Enum, Option, Null, Bytes, Map, Struct, StructObject, Vec
 
 
 # Test definitions
@@ -150,6 +151,91 @@ class TestSerializableMixin(unittest.TestCase):
         validator_obj = ValidatorData.from_jam_bytes(scale_data)
 
         self.assertEqual(self.test_obj, validator_obj)
+
+    def test_binary_enum_encodings(self):
+        cases = (
+            (CustomErrorCode.bad_slot, b'\x00'),
+            (CustomErrorCode.duplicate_ticket, b'\x06'),
+            (Output(ok=OutputMarks(epoch_mark=None)), b'\x00\x00'),
+            (Output(err=CustomErrorCode.duplicate_ticket), b'\x01\x06'),
+            (WorkExecResult(ok=b''), b'\x00\x00'),
+            (WorkExecResult(ok=b'abc'), b'\x00\x03abc'),
+            (WorkExecResult(out_of_gas=Null), b'\x01'),
+        )
+        for value, expected in cases:
+            with self.subTest(value=value):
+                serialized = value.serialize()
+                encoded = value.to_jam_bytes()
+                self.assertEqual(expected, encoded.to_bytes())
+                self.assertEqual(0, encoded.offset)
+                self.assertEqual(serialized, value.serialize())
+
+    def test_binary_nested_collections_roundtrip(self):
+        @dataclass
+        class Packet(Serializable):
+            payload: bytes = field(metadata={'codec': Bytes})
+            numbers: list = field(metadata={'codec': Vec(Option(U16))})
+            labels: dict = field(metadata={'codec': Map(U8, Bytes)})
+
+        packet = Packet(b'abc', [None, 258], {2: b'b', 1: b'a'})
+        encoded = packet.to_jam_bytes()
+        self.assertEqual(b'\x03abc\x02\x00\x01\x02\x01\x02\x01\x01a\x02\x01b', encoded.to_bytes())
+        self.assertEqual(packet, Packet.from_jam_bytes(encoded))
+        self.assertEqual(encoded.length, encoded.offset)
+
+    def test_binary_encoding_returns_independent_buffers(self):
+        value = Output(ok=OutputMarks(epoch_mark=None))
+        first = value.to_jam_bytes()
+        first.get_next_bytes(1)
+        second = value.to_jam_bytes()
+
+        self.assertEqual(1, first.offset)
+        self.assertEqual(0, second.offset)
+        second.data[0] = 99
+        self.assertEqual(b'\x00\x00', first.to_bytes())
+        self.assertEqual(b'\x00\x00', value.to_jam_bytes().to_bytes())
+
+        value.ok.epoch_mark = EpochMark(bytes(32), [bytes(32)] * 6)
+        self.assertEqual(b'\x00\x01' + bytes(32 * 7), value.to_jam_bytes().to_bytes())
+        self.assertEqual(b'\x00\x00', first.to_bytes())
+
+    def test_binary_encoding_preserves_validation(self):
+        @dataclass
+        class Packet(Serializable):
+            number: int = field(metadata={'codec': U8})
+            digest: bytes = field(metadata={'codec': H256})
+
+        for value in (Packet(256, bytes(32)), Packet(1, b'short')):
+            with self.subTest(value=value):
+                with self.assertRaises(ScaleEncodeException):
+                    value.to_jam_bytes()
+
+    def test_binary_encoding_preserves_custom_encoder(self):
+        class PrefixedCodec(StructObject):
+            def encode(self, value=None):
+                return JamBytes(b'\xaa' + super().encode(value).to_bytes())
+
+        @dataclass
+        class Packet(Serializable):
+            number: int
+            _codec_type_def = Struct(number=U8).impl(PrefixedCodec)
+
+        self.assertEqual(b'\xaa\x07', Packet(7).to_jam_bytes().to_bytes())
+
+    def test_binary_encoding_preserves_custom_validation_hook(self):
+        class ValidatedCodec(StructObject):
+            def deserialize(self, value):
+                if self._data is not None:
+                    raise ScaleDeserializeException('custom post-encode validation')
+                return super().deserialize(value)
+
+        @dataclass
+        class Packet(Serializable):
+            number: int
+            _codec_type_def = Struct(number=U8).impl(ValidatedCodec)
+
+        with self.assertRaisesRegex(ScaleDeserializeException, 'custom post-encode validation'):
+            Packet(7).to_jam_bytes()
 
 
 if __name__ == '__main__':
