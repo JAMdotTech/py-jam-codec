@@ -7,6 +7,7 @@ import json
 
 from jamcodec.base import JamCodecTypeDef, JamCodecType, JamBytes
 from jamcodec.types import Struct, StructObject, Option, Vec, Enum
+from jamcodec.decoding import decode_to_object
 
 T = TypeVar('T')
 
@@ -77,7 +78,10 @@ class Serializable:
 
     @classmethod
     def from_jam_bytes(cls: Type[T], scale_bytes: JamBytes) -> T:
-        scale_obj = cls.to_codec_def().new()
+        codec = cls.to_codec_def()
+        if getattr(cls.from_codec_type, '__func__', None) is Serializable.from_codec_type.__func__:
+            return decode_to_object(codec, scale_bytes)
+        scale_obj = codec.new()
         scale_obj.decode(scale_bytes)
         return cls.from_codec_type(scale_obj)
 
