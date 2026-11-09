@@ -8,6 +8,7 @@ import json
 from jamcodec.base import JamCodecTypeDef, JamCodecType, JamBytes
 from jamcodec.types import Struct, StructObject, Option, Vec, Enum
 from jamcodec.decoding import decode_to_object
+from jamcodec.encoding import encode_from_object
 
 T = TypeVar('T')
 
@@ -69,7 +70,17 @@ class Serializable:
         return scale_type.to_serializable_obj()
 
     def to_jam_bytes(self) -> JamBytes:
-        scale_obj = self.to_codec_type()
+        to_codec_type = self.to_codec_type
+        if (getattr(to_codec_type, '__func__', None) is _DEFAULT_TO_CODEC_TYPE
+                and is_dataclass(self)):
+            codec = self.to_codec_def()
+            data = encode_from_object(codec, self)
+            if data is not None:
+                return data
+            scale_obj = codec.new()
+            scale_obj.deserialize(self)
+        else:
+            scale_obj = to_codec_type()
         if type(scale_obj) in (JamCodecType, StructObject):
             # The value is already normalized; only the encoded bytes are needed.
             return scale_obj.type_def.encode(scale_obj.value_serialized)
@@ -106,3 +117,6 @@ class Serializable:
         for field in dataclasses.fields(self):
             if getattr(self, field.name, None) is not None:
                 return field.name, getattr(self, field.name)
+
+
+_DEFAULT_TO_CODEC_TYPE = Serializable.to_codec_type
